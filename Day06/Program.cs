@@ -1,5 +1,7 @@
 ﻿// https://adventofcode.com/2024/day/6
 
+using System.Diagnostics;
+
 string[] input = new[]
 {
     "....#.....", // 0
@@ -14,39 +16,31 @@ string[] input = new[]
     "......#..."  // 9
 };
 
-//var (obstacles, position, direction, boundary) = GetData(input);
+Stopwatch timer = Stopwatch.StartNew();
 
+//var (obstacles, position, direction, boundary) = GetData(input);
 var (obstacles, position, direction, boundary) = GetData(File.ReadAllLines("input.txt").ToArray());
 
-// foreach (var obstacle in obstacles)
-// {
-//     Console.WriteLine($"Obstacle: ({obstacle.x},{obstacle.y})");
-// }
-//
-// Console.WriteLine($"Position: ({position.Value.x},{position.Value.y})");
-// Console.WriteLine($"Direction: ({direction.Value.dx},{direction.Value.dy})");
-
-// 4515
-
+// Part 1
 var uniqueSteps = FindWay(obstacles, position, direction, boundary);
 
+// 4515
 Console.WriteLine($"Part 1. Unique positions: {uniqueSteps.Count}");
 
 
 // Part 2 
-
 // get potential obstacles along the path 
-
 var potentialObstacles = GetPotentialObstacles(uniqueSteps, obstacles, boundary);
 var additionalObstacles = new HashSet<(int x, int y)>();
 
+// check if any potential obstacle generate a loop
 foreach (var potentialObstacle in potentialObstacles)
 {
     HashSet<(int x, int y)> tmp = new HashSet<(int x, int y)>(obstacles);
     tmp.Add(potentialObstacle);
-    //tmp.Add((3,6));
     
-    if (HasLoop(tmp, position, direction, boundary))
+    if (HasLoopStorePosition(tmp, position, direction, boundary))
+    //if (HasLoopStorePositionAndDirection(tmp, position, direction, boundary))
     {
         additionalObstacles.Add(potentialObstacle);
     }
@@ -54,6 +48,13 @@ foreach (var potentialObstacle in potentialObstacles)
 
 // 1309
 Console.WriteLine($"Part 2. Extra obstacles: {additionalObstacles.Count}");
+
+timer.Stop();
+
+Console.WriteLine($"Elapsed: {timer.ElapsedMilliseconds} ms");
+
+
+
 
 HashSet<(int x, int y)> GetPotentialObstacles(HashSet<(int x, int y)> uniqueSteps, HashSet<(int x, int y)> obstacles, (int x, int y) boundary)
 {
@@ -106,7 +107,7 @@ HashSet<(int x, int y)> FindWay(HashSet<(int x, int y)> obstacles, (int x, int y
     return steps;
 }
 
-bool HasLoop(HashSet<(int x, int y)> obstacles, (int x, int y) position, (int dx, int dy) direction, (int x, int y) boundary)
+bool HasLoopStorePosition(HashSet<(int x, int y)> obstacles, (int x, int y) position, (int dx, int dy) direction, (int x, int y) boundary)
 {
     var steps = new HashSet<(int x, int y)>();
     var currentPosition = position;
@@ -127,25 +128,49 @@ bool HasLoop(HashSet<(int x, int y)> obstacles, (int x, int y) position, (int dx
         }
         else
         {
-            // if (steps.Contains(nextPosition) && steps.Contains(currentPosition))
-            //     return true;
-
-            //previousPosition = currentPosition;
             currentPosition = nextPosition;
 
             if(!steps.Add(currentPosition))
                 i++;
         }
-        
-        // todo: find better way to find end of loop
-        //  e.g keep direction with position - if the see the same position with the same direction we have a loop.
 
-        if (i > 800)
+        // higher than arbitrary number can assume we are in a loop
+        // some wasted cycles but still faster than second attempt with a storing direction
+        if (i > boundary.x * boundary.x) 
             return true;
 
+        i++;
     }
-}    
+}
 
+bool HasLoopStorePositionAndDirection(HashSet<(int x, int y)> obstacles, (int x, int y) position, (int dx, int dy) direction, (int x, int y) boundary)
+{
+    var steps = new HashSet<(int x, int y, int dx, int dy)>();
+    var currentPosition = position;
+
+    while (true)
+    {
+        (int x, int y) nextPosition = (currentPosition.x + direction.dx, currentPosition.y + direction.dy);
+        
+        // have we left boundaries
+        if (nextPosition.x < 0 || nextPosition.x >= boundary.x || nextPosition.y < 0 || nextPosition.y >= boundary.y)
+            return false;
+
+        if (obstacles.Contains(nextPosition))
+        {
+            // nextPosition is obstacle change direction - turn right
+            direction = TurnRight(direction);
+        }
+        else
+        {
+            currentPosition = nextPosition;
+
+            // if we are in the same position & direction we have a loop
+            if (!steps.Add((currentPosition.x, currentPosition.y, direction.dx, direction.dy)))
+                return true;            
+        }
+    }
+}   
 
 return;
 
@@ -163,18 +188,12 @@ return;
     return (0, -1);
 }
 
-// todo: encapsulate direction somehow
-
-
 // Get the list of obstacles, and boundaries of the grid
 (HashSet<(int x, int y)>, (int x, int y) position, (int dx, int dy) direction, (int x, int y) boundary) GetData(string[] input)
 {
-    // todo: refactor to remove null
-    // todo: introduce object abstractions
-    
     var obstacles = new HashSet<(int x, int y)>();
-    (int x, int y)? position = null;
-    (int dx, int dy)? direction = null;
+    (int x, int y) position = (0, 0);
+    (int dx, int dy) direction = (0, 0);
     (int x, int y) boundary = (input[0].Length, input.Length);
     
     for (int i = 0; i < boundary.x; i++)
@@ -210,5 +229,5 @@ return;
         }
     }
 
-    return (obstacles, position.Value, direction.Value, boundary);
-} 
+    return (obstacles, position, direction, boundary);
+}
