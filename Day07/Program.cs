@@ -9,12 +9,13 @@ class Program
         var equationValues = File.ReadAllLines("input.txt").Select(o => GetEquationValues(o)).ToArray();
         
         Stopwatch timer = Stopwatch.StartNew();
-
+        
         // Part 1
         long sum = 0;
         
         foreach (var ev in equationValues)
         {
+            // number of permutations = operation characters ^ (length-1) i.e. 2^(length-1) 
             var canAdd = GetOperationPermutations(['+', '*'], ev.Values.Length - 1)
                 .Any(p => ev.Total == GetEquationResult(ev.Values, p));
             
@@ -31,6 +32,7 @@ class Program
         
         foreach (var ev in equationValues)
         {
+            // number of permutations 3^(length-1)
             var canAdd = GetOperationPermutations(['+', '*', '|'], ev.Values.Length - 1)
                 .Any(p => ev.Total == GetEquationResult(ev.Values, p));
             
@@ -42,9 +44,11 @@ class Program
         
         Console.WriteLine($"Part 2: Sum: {sum}");
         
+        
         timer.Stop();
         
-        Console.WriteLine($"Elapsed: {timer.ElapsedMilliseconds}");        
+        Console.WriteLine($"Elapsed: {timer.ElapsedMilliseconds}");
+        
     }
     
     private static long GetEquationResult(long[] values, string operators)
@@ -133,6 +137,30 @@ class Program
                 yield return new string(permutation);
             }
         }
-    }     
+    }
+    
+    static IEnumerable<string> GetOperationPermutationsUsingQueue(char[] characters, int length)
+    {
+        Queue<string> queue = new Queue<string>();
+        queue.Enqueue("");
+
+        while (queue.Count > 0)
+        {
+            string current = queue.Dequeue();
+
+            if (current.Length == length)
+            {
+                yield return current;
+            }
+            else
+            {
+                foreach (char c in characters)
+                {
+                    queue.Enqueue(current + c);
+                }
+            }
+        }
+    }
+
 
 }
