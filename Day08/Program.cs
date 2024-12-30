@@ -12,51 +12,21 @@ class Program
         //var (frequencies, boundary) = GetInput(File.ReadAllLines("testB.txt"));
         var (frequencies, boundary) = GetInput(File.ReadAllLines("input.txt"));
 
-        var antiNodes = new HashSet<Point>();
-        
-        // Part 1
-        foreach (var frequency in frequencies.Where(o => o.Value.Count > 1))
-        {
-            var antennaPoints = GetAntennaPermutations(frequency.Value);
-            
-            //DebugAntennaPoints(frequency, antennaPoints);
-        
-            foreach (var ap in antennaPoints)
-            {
-                var (aa, ab) = GetAntiNodePoints(ap);
-        
-                //DebugAntiNodes(aa, boundary, ab, frequency, ap);
-        
-                if(CheckBoundary(aa, boundary))
-                    antiNodes.Add(aa);
-                
-                if(CheckBoundary(ab, boundary))
-                    antiNodes.Add(ab);
-            }
-        }
-        
         // 400 OK
-        Console.WriteLine($"Part 1: Unique AntiNodes: {antiNodes.Count}");
-        
-        // Part 2
-        antiNodes.Clear();
-        
-        foreach (var frequency in frequencies.Where(o => o.Value.Count > 1))
-        {
-            var antennaPoints = GetAntennaPermutations(frequency.Value);
-
-            foreach (var ap in antennaPoints)
-            {
-                foreach (var p in GetAntiNodePointsPart2(ap, boundary))
-                {
-                    if (CheckBoundary(p, boundary))
-                        antiNodes.Add(p);
-                }
-            }
-        }
+        Console.WriteLine($"Part 1: Unique AntiNodes: {GetAntiNodes(frequencies, boundary, GetPart1AntiNodePoints)}");
         
         // 1280 - OK 
-        Console.WriteLine($"Part 2: Unique AntiNodes: {antiNodes.Count}");
+        Console.WriteLine($"Part 2: Unique AntiNodes: {GetAntiNodes(frequencies, boundary, GetPart2AntiNodePoints)}");
+    }
+
+    delegate IEnumerable<Point> GetAndiNodePoints((Point a, Point b) ap, Boundary b);
+
+    static int GetAntiNodes(Dictionary<char, List<Point>> frequencies, Boundary boundary, GetAndiNodePoints getAntiNodePoints)
+    {
+        return frequencies.Where(o => o.Value.Count > 1)
+            .SelectMany(o => GetAntennaPermutations(o.Value).SelectMany(o => getAntiNodePoints(o, boundary)))
+            .Distinct()
+            .Count();
     }
 
     static (Dictionary<char, List<Point>>, Boundary) GetInput(string[] input)
@@ -104,95 +74,51 @@ class Program
         return pairs;
     }
     
-    private static (Point aa, Point ab) GetAntiNodePoints((Point a, Point b) antennaPoints)
+    static IEnumerable<Point> GetPart1AntiNodePoints((Point a, Point b) ap, Boundary boundary)
     {
-        // Define points A and B
-        double x1 = antennaPoints.a.x, y1 = antennaPoints.a.y;
-        double x2 = antennaPoints.b.x, y2 = antennaPoints.b.y;
+        var dx = ap.a.x - ap.b.x;
+        var dy = ap.a.y - ap.b.y;
 
-        // Calculate the length of the vector AB
-        int length = (int)Math.Sqrt(Math.Pow(x2 - x1, 2) + Math.Pow(y2 - y1, 2));
-        
-        // Define distance d
-        int d = length;
-        //Console.WriteLine($"Distance: {d}");
+        var a = (ap.a.x + dx, ap.a.y + dy);
+        var b = (ap.b.x - dx, ap.b.y - dy);
 
-        // Calculate the unit vector in the direction of AB
-        double ux = (x2 - x1) / length;
-        double uy = (y2 - y1) / length;
-        //Console.WriteLine($"Direction vector: ({ux},{uy})");
-
-        // Calculate the coordinates of the point P1 which is distance d from A
-        int px1 = (int)(x1 - d * ux);
-        int py1 = (int)(y1 - d * uy);
-
-        // Calculate the coordinates of the point P2 which is distance d from B
-        int px2 = (int)(x2 + d * ux);
-        int py2 = (int)(y2 + d * uy);
-
-        return ((px1, py1), (px2, py2));
+        if (IsInside(a, boundary))
+            yield return a;
+            
+        if (IsInside(b, boundary))
+            yield return b;
     }
     
-    private static IEnumerable<Point> GetAntiNodePointsPart2((Point a, Point b) antennaPoints, Boundary boundary)
+    static IEnumerable<Point> GetPart2AntiNodePoints((Point a, Point b) ap, Boundary boundary)
     {
-        // Define points A and B
-        double x1 = antennaPoints.a.x, y1 = antennaPoints.a.y;
-        double x2 = antennaPoints.b.x, y2 = antennaPoints.b.y;
+        yield return ap.a;
+        yield return ap.b;
+        
+        var dx = ap.a.x - ap.b.x;
+        var dy = ap.a.y - ap.b.y;
 
-        // Calculate the length of the vector AB
-        int length = (int)Math.Sqrt(Math.Pow(x2 - x1, 2) + Math.Pow(y2 - y1, 2));
+        var a = ap.a;
+        var b = ap.b;
 
-        // Calculate the unit vector in the direction of AB
-        double ux = (x2 - x1) / length;
-        double uy = (y2 - y1) / length;
-        //Console.WriteLine($"Direction vector: ({ux},{uy})");
-
-        // Define distance d
-        int d = length;
-        //Console.WriteLine($"Distance: {d}");
-
-        // assuming the grid is square
-        for (int i = 1; i*d-1 <= boundary.xb; i++)
+        while (IsInside(a, boundary))
         {
-            // Calculate the coordinates of the point P1 which is distance d from A
-            int px1 = (int)(x1 - d * i * ux);
-            int py1 = (int)(y1 - d * i * uy);
-
-            // Calculate the coordinates of the point P2 which is distance d from B
-            int px2 = (int)(x2 + d * i * ux);
-            int py2 = (int)(y2 + d * i * uy);
-
-            yield return (px1, py1);
-            yield return (px2, py2);
-            // antenna points are also antiNodes
-            yield return antennaPoints.a;
-            yield return antennaPoints.b;
+            yield return a;
+            
+            a.x += dx;
+            a.y += dy;
         }
-    }    
+        
+        while (IsInside(b, boundary))
+        {
+            yield return b;
+            
+            b.x -= dx;
+            b.y -= dy;
+        }
+    }
 
-    static bool CheckBoundary(Point p, Boundary b)
+    static bool IsInside(Point p, Boundary b)
     {
         return p.x >= 0 && p.x <= b.xb && p.y >= 0 && p.y <= b.yb;
     }
-
-    private static void DebugAntennaPoints(KeyValuePair<char, List<Point>> frequency, List<(Point a, Point b)> antennaPoints)
-    {
-        //Console.WriteLine($"Frequency: {frequency.Key}, Points No: {string.Join(',', frequency.Value)}");
-        Console.WriteLine($"Frequency: {frequency.Key}, Permutations No: {antennaPoints.Count}");
-        Console.WriteLine($"Frequency: {frequency.Key}, Permutations No: {string.Join(',', antennaPoints)}");
-    }
-
-    private static void DebugAntiNodes(Point aa, Boundary boundary, Point ab, KeyValuePair<char, List<Point>> frequency, (Point a, Point b) ap)
-    {
-        bool ai = false;
-        bool bi = false;
-        if(CheckBoundary(aa, boundary))
-            ai = true;
-                
-        if(CheckBoundary(ab, boundary))
-            bi = true;
-                
-        Console.WriteLine($"Frequency: {frequency.Key}, Points: {string.Join(',', ap.a, ap.b)}, AntiNodes: {string.Join(',', aa, ab)}, Inside: ({ai}, {bi})");
-    }
-
 }
