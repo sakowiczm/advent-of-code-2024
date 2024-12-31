@@ -12,16 +12,14 @@ class Program
         //var (frequencies, boundary) = GetInput(File.ReadAllLines("testB.txt"));
         var (frequencies, boundary) = GetInput(File.ReadAllLines("input.txt"));
 
-        // 400 OK
+        // 400
         Console.WriteLine($"Part 1: Unique AntiNodes: {GetAntiNodes(frequencies, boundary, GetPart1AntiNodePoints)}");
-        
-        // 1280 - OK 
+
+        // 1280 
         Console.WriteLine($"Part 2: Unique AntiNodes: {GetAntiNodes(frequencies, boundary, GetPart2AntiNodePoints)}");
     }
-
-    delegate IEnumerable<Point> GetAndiNodePoints((Point a, Point b) ap, Boundary b);
-
-    static int GetAntiNodes(Dictionary<char, List<Point>> frequencies, Boundary boundary, GetAndiNodePoints getAntiNodePoints)
+    
+    static int GetAntiNodes(Dictionary<char, List<Point>> frequencies, Boundary boundary, Func<(Point a, Point b), Boundary, IEnumerable<Point>> getAntiNodePoints)
     {
         return frequencies.Where(o => o.Value.Count > 1)
             .SelectMany(o => GetAntennaPermutations(o.Value).SelectMany(o => getAntiNodePoints(o, boundary)))
