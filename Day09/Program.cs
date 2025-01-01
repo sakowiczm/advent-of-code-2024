@@ -4,11 +4,172 @@ class Program
 {
     static void Main()
     {
-        //string input = "2333133121414131402"; // 1928
-        string input = System.IO.File.ReadAllText("input.txt"); // 6399153661894
+        //string input = "2333133121414131402"; // P1 1928 P2 2858
+        string input = System.IO.File.ReadAllText("input.txt"); // P1 6399153661894 P2 6421724645083
         
-        Console.WriteLine($"Part 1. Using Array. Sum: {CalculateUsingArray.Calculate(input)}");
-        Console.WriteLine($"Part 1. Using LinkedList. Sum: {CalculateUsingLinkedList.Calculate(input)}");
+        Console.WriteLine($"Part 1. Using Array. Output: {CalculateUsingArray.Calculate(input)}");
+        Console.WriteLine($"Part 1. Using LinkedList. Output: {CalculateUsingLinkedList.Calculate(input)}");
+        
+        Console.WriteLine($"Part 2. Using LinkedList. Output: {CalculateUsingLinkedListPart2.Calculate(input)}");
+    }
+}
+
+public static class CalculateUsingLinkedListPart2
+{
+    record Data(int Id, int Length);
+    record File(int Id, int Length) : Data(Id, Length);
+    record Empty(int Length) : Data(-1, Length);
+    
+    public static long Calculate(string input)
+    {
+        var data = GetDecodedDiskData(input);
+
+        CompactData(ref data);
+
+        return Calculate(ref data);
+    }
+    
+    static long Calculate(ref LinkedList<Data> data)
+    {
+        int index = 0;
+        long sum = 0;
+        var node = data.First;
+        
+        while (node.Next != null)
+        {
+            if (node.Value is File)
+            {
+                for (int i = 0; i < node.Value.Length; i++)
+                {
+                    sum += node.Value.Id * index;
+                    index++;
+                }
+            }
+            else
+            {
+                // empty
+                index += node.Value.Length;
+            }
+            
+            node = node.Next;
+        }
+        
+        return sum;
+    }
+
+    static void CompactData(ref LinkedList<Data> data)
+    {
+        int fileId = GetNextFile(data.Last).Value.Id;
+        LinkedListNode<Data> file = data.Last;
+        
+        while (fileId >= 0)
+        //while (true)
+        {
+            file = GetFileWithId(file, fileId);
+
+            var space = GetNextSpace(data.First, file);
+            
+            if(space != null)
+                Swap(ref data, space, file);
+            
+            // if (space == file || space == file.Previous)
+            //     return;
+            
+            fileId--;
+        }
+        
+    }
+    
+    static void Swap(ref LinkedList<Data> data, LinkedListNode<Data> space, LinkedListNode<Data> file)
+    {
+        if (space.Value.Length >= file.Value.Length)
+        {
+            int el = space.Value.Length;
+            int fl = file.Value.Length;
+
+            // move file from end to the empty space
+            data.AddBefore(space, file.Value);
+            // empty the space at the end
+            file.Value = new Empty(fl);
+                
+            // some empty space left at the beginning
+            if (el != fl)
+            {
+                space.Value = new Empty(el - fl);
+            }
+            else // if equal
+            {
+                data.Remove(space);
+            }                  
+        }
+    }
+
+    static LinkedListNode<Data>? GetNextSpace(LinkedListNode<Data> startNode, LinkedListNode<Data> endNode)
+    {
+        if (startNode.Value is Empty && startNode.Value.Length == endNode.Value.Length)
+            return startNode;
+
+        while (startNode.Value is File || (startNode.Value is Empty && startNode.Value.Length < endNode.Value.Length))
+        {
+            if (startNode.Next == null || startNode == endNode || startNode.Next == endNode)
+                return null;
+            
+            startNode = startNode.Next;
+        }
+
+        return startNode;
+    }
+
+    static LinkedListNode<Data> GetFileWithId(LinkedListNode<Data> node, int fileId)
+    {
+        if (node.Value is File && node.Value.Id == fileId)
+            return node;
+        
+        while (node.Value is Empty || (node.Value is File && node.Value.Id != fileId))
+        {
+            node = node.Previous;
+        }
+        
+        return node;
+    }
+    
+    static LinkedListNode<Data> GetNextFile(LinkedListNode<Data> data)
+    {
+        if (data.Value is File)
+            return data;
+
+        while (data.Value is Empty)
+        {
+            data = data.Previous;
+        }
+
+        return data;
+    }
+
+    static LinkedList<Data> GetDecodedDiskData(string input)
+    {
+        LinkedList<Data> data = new LinkedList<Data>();
+
+        int index = 0;
+        for (int i = 0; i < input.Length; i++)
+        {
+            var c = input[i];
+
+            if (i % 2 == 0)
+            {
+                data.AddLast(new File(index, c - '0'));
+                index++;
+            }
+            else
+            {
+                if(c == '0')
+                    continue;
+
+                data.AddLast(new Empty(c - '0'));
+            }
+        }
+
+        return data;
     }
 }
 
