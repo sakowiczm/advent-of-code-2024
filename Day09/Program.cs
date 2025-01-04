@@ -63,7 +63,6 @@ public static class CalculateUsingLinkedListPart2
         LinkedListNode<Data> file = data.Last;
         
         while (fileId >= 0)
-        //while (true)
         {
             file = GetFileWithId(file, fileId);
 
@@ -71,9 +70,6 @@ public static class CalculateUsingLinkedListPart2
             
             if(space != null)
                 Swap(ref data, space, file);
-            
-            // if (space == file || space == file.Previous)
-            //     return;
             
             fileId--;
         }
