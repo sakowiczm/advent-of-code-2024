@@ -2,16 +2,21 @@
 
 using Point = (int x, int y, int h);
 
-//Console.WriteLine($"Part 1. Score: {GetPart2ScoreRecursion(new Point(2, 0, 0), File.ReadAllLines("test.txt"))}");
+//Console.WriteLine($"Test. Score: {GetPart1ScoreUsingDFS(new Point(2, 0, 0), File.ReadAllLines("test.txt"))}");
 
- var map = File.ReadAllLines("input.txt"); // P1 786 P2 1722
+var map = File.ReadAllLines("input.txt"); // P1 786 P2 1722
 var startingPoints = FindStartingPoint(map);
- int p1score = startingPoints.Select(o => GetPart1Score(o, map)).Sum();
- int p2score = startingPoints.Select(o => GetPart2ScoreRecursion(o, map)).Sum();
+int p1score = startingPoints.Select(o => GetPart1Score(o, map)).Sum();
+int p1dfsscore = startingPoints.Select(o => GetPart1ScoreUsingDFS(o, map)).Sum();
+int p2score = startingPoints.Select(o => GetPart2ScoreRecursion(o, map)).Sum();
+int p2dfsscore = startingPoints.Select(o => GetPart2ScoreUsingDFS(o, map)).Sum();
 
- Console.WriteLine($"Part 1. Score: {p1score}");
- Console.WriteLine($"Part 2. Score: {p2score}");
+Console.WriteLine($"Part 1. Score: {p1score}");
+Console.WriteLine($"Part 1 DFS. Score: {p1dfsscore}");
+Console.WriteLine($"Part 2. Score: {p2score}");
+Console.WriteLine($"Part 2 DFS. Score: {p2dfsscore}");
 
+// Get all unique 9 we reach from given start point 
 int GetPart1Score(Point start, string[] map)
 {
     IEnumerable<Point> next = new[] { start };
@@ -27,6 +32,70 @@ int GetPart1Score(Point start, string[] map)
     return next.Count();
 }
 
+// Count all unique 9 we can reach from starting point
+int GetPart1ScoreUsingDFS(Point start, string[] map)
+{
+    int result = 0;
+    HashSet<Point> visited = new HashSet<Point>();
+    Queue<Point> q = new Queue<Point>();
+    
+    q.Enqueue(start);
+
+    while (q.Count > 0)
+    {
+        var current = q.Dequeue();
+
+        if (current.h == 9)
+        {
+            // check if the 9 we reach is unique
+            if (!visited.Contains(current))
+            {
+                result += 1;
+                visited.Add(current);
+            }
+            
+            continue;
+        }
+
+        foreach (var neighbor in GetNextSteps(current, map))
+        {
+            if(neighbor.h == current.h + 1)
+                q.Enqueue(neighbor);
+        }
+    }
+
+    return result;
+}
+
+// Sum every unique step leading to any accessible 9
+int GetPart2ScoreUsingDFS(Point start, string[] map)
+{
+    int result = 0;
+    Queue<Point> q = new Queue<Point>();
+    
+    q.Enqueue(start);
+
+    while (q.Count > 0)
+    {
+        var current = q.Dequeue();
+
+        if (current.h == 9)
+        {
+            result += 1;
+            continue;
+        }
+
+        foreach (var neighbor in GetNextSteps(current, map))
+        {
+            if(neighbor.h == current.h + 1)
+                q.Enqueue(neighbor);
+        }
+    }
+
+    return result;
+}
+
+// Sum all unique points encountered getting to 9 from given start point
 int GetPart2ScoreRecursion(Point start, string[] map)
 {
     if (start.h == 9)
@@ -41,8 +110,6 @@ int GetPart2ScoreRecursion(Point start, string[] map)
 
     return ans;
 }
-
-
 
 IEnumerable<Point> GetNextSteps(Point point, string[] map)
 {
