@@ -2,17 +2,17 @@
 
 using Point = (int x, int y, int h);
 
-//var map = File.ReadAllLines("test.txt");
-var map = File.ReadAllLines("input.txt"); // P1 786
+//Console.WriteLine($"Part 1. Score: {GetPart2ScoreRecursion(new Point(2, 0, 0), File.ReadAllLines("test.txt"))}");
 
+ var map = File.ReadAllLines("input.txt"); // P1 786 P2 1722
+var startingPoints = FindStartingPoint(map);
+ int p1score = startingPoints.Select(o => GetPart1Score(o, map)).Sum();
+ int p2score = startingPoints.Select(o => GetPart2ScoreRecursion(o, map)).Sum();
 
-//Console.WriteLine($"Part 1. Score: {GetTailheadScore(new Point(2, 0, 0), map)}");
+ Console.WriteLine($"Part 1. Score: {p1score}");
+ Console.WriteLine($"Part 2. Score: {p2score}");
 
-int score = FindStartingPoint(map).Select(o => GetTailheadScore(o, map)).Sum();
-Console.WriteLine($"Part 1. Score: {score}");
-
-
-int GetTailheadScore(Point start, string[] map)
+int GetPart1Score(Point start, string[] map)
 {
     IEnumerable<Point> next = new[] { start };
 
@@ -26,6 +26,23 @@ int GetTailheadScore(Point start, string[] map)
 
     return next.Count();
 }
+
+int GetPart2ScoreRecursion(Point start, string[] map)
+{
+    if (start.h == 9)
+        return 1;
+
+    int ans = 0;
+    foreach (var step in GetNextSteps(start, map))
+    {
+        if (step.h == start.h + 1)
+            ans += GetPart2ScoreRecursion(step, map);
+    }
+
+    return ans;
+}
+
+
 
 IEnumerable<Point> GetNextSteps(Point point, string[] map)
 {
