@@ -14,12 +14,8 @@ string input = string.Concat(File.ReadLines("input.txt"));
 
 Console.WriteLine("Length: " + input.Length);
 
-// todo: how to write below using spans?
-// https://learn.microsoft.com/en-us/archive/msdn-magazine/2018/january/csharp-all-about-span-exploring-a-new-net-mainstay
-
 var sum = GetAllowedSubstrings(input).Select(o => GetSum(o)).Sum();
 Console.WriteLine("Sum: " + sum);
-
 
 IEnumerable<string> GetAllowedSubstrings(string ainput)
 {

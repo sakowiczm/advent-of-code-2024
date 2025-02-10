@@ -25,11 +25,6 @@ static (List<int> left, List<int> right) ReadInput(string file = @".\input.txt")
 
     using (TextReader reader = new StreamReader(file))
     {
-        //while (reader.ReadLine() is string line)
-        // https://www.jetbrains.com/help/resharper/ConvertTypeCheckToNullCheck.html
-        // https://www.reddit.com/r/csharp/comments/wae89g/rider_suggestion_use_not_null_pattern_instead_of/?rdt=55489
-        
-        // todo: investigate
         while (reader.ReadLine() is { } line)
         {
             var values = line.Split(' ', 2);

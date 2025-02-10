@@ -7,11 +7,6 @@ var reports = GetReports();
 var safe = reports.Count(r => r.Check());
 Console.WriteLine($"Safe: {safe}");
 
-// foreach (var report in reports)
-// {
-//     Console.WriteLine(report.ToString());
-// }
-
 return;
 
 IEnumerable<Report> GetReports(string fileName = @"input\input.txt")
@@ -31,7 +26,6 @@ public class Report
 
     public bool Check()
     {
-        //return Check(Levels) || GetProblemDampenedLevels().Any(o => Check(o));
         return Check(Levels) || Expand(Levels).Any(o => Check(o));
     }
     

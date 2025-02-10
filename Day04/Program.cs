@@ -200,9 +200,6 @@ string[] Reverse(string[] input)
 
 string ReverseV2(string input)
 {
-    // using System.Linq;
-    // return new string(input.Reverse().ToArray());
-    
     char[] reversed = new char[input.Length];
 
     for (int i = 0; i < input.Length; i++)
@@ -212,7 +209,6 @@ string ReverseV2(string input)
     
     return new string(reversed);
 }
-
 
 int Part2(string[] input)
 {
